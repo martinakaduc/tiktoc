@@ -14,7 +14,7 @@ from trainer import *
 from utils import *
 from eval import *
 from pdb import set_trace
-from test_case_check_update import test_case_check, uniq_test_construct, handle_uniq_test_exception
+from gen_code_compiler import test_case_check, uniq_test_construct, handle_uniq_test_exception
 
 @hydra.main(version_base=None, config_path=".", config_name="configs_granulardkt")
 def main(configs):
