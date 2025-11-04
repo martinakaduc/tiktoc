@@ -109,21 +109,6 @@ def main(configs):
 
     else:
         train_set, valid_set, test_set, dataset, students = read_granular_data(configs)
-
-        # _, good_test_case = test_case_check()
-        # question_input_dict = uniq_test_construct(good_test_case)
-        # question_input_dict = handle_uniq_test_exception(question_input_dict)
-        # tcs = question_input_dict.values()
-
-        # set_trace()
-        # solution = get_test_case_solution(good_test_case)
-        # sol = solution.values()
-        # tc = [tc_i for tc_ls in tcs for tc_i in tc_ls]
-        # sols = [s_i for s_ls in sol for s_i in s_ls]
-        # tc_tok = ['(' + x + '): '+ y for x,y in zip(tc, sols)]
-        # tokenized = tokenizer(tc_tok, padding=False, truncation=False, add_special_tokens=False)
-        # num_tokens = [len(token_list) for token_list in tokenized["input_ids"]]
-
         
         granular = False
         question_input_dict = None
