@@ -19,7 +19,6 @@ from collections import Counter
 from .utils import ngrams
 
 
-
 def sentence_bleu(
     references,
     hypothesis,
@@ -479,9 +478,11 @@ class SmoothingFunction:
         Smoothing method 1: Add *epsilon* counts to precision with 0 counts.
         """
         return [
-            (p_i.numerator + self.epsilon) / p_i.denominator
-            if p_i.numerator == 0
-            else p_i
+            (
+                (p_i.numerator + self.epsilon) / p_i.denominator
+                if p_i.numerator == 0
+                else p_i
+            )
             for p_i in p_n
         ]
 
@@ -515,7 +516,7 @@ class SmoothingFunction:
         incvnt = 1  # From the mteval-v13a.pl, it's referred to as k.
         for i, p_i in enumerate(p_n):
             if p_i.numerator == 0:
-                p_n[i] = 1 / (2 ** incvnt * p_i.denominator)
+                p_n[i] = 1 / (2**incvnt * p_i.denominator)
                 incvnt += 1
         return p_n
 

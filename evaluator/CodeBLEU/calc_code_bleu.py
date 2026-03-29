@@ -1,18 +1,19 @@
-# Copyright (c) Microsoft Corporation. 
+# Copyright (c) Microsoft Corporation.
 # Licensed under the MIT license.
 # https://github.com/microsoft/CodeXGLUE/tree/main/Code-Code/code-to-code-trans/evaluator/CodeBLEU
 
 # -*- coding:utf-8 -*-
 import argparse
 import os
+
 # from evaluator.CodeBLEU import bleu, weighted_ngram_match, syntax_match, dataflow_match
 from . import bleu, weighted_ngram_match, syntax_match, dataflow_match
 
 
-def get_codebleu(pre_references, hypothesis, lang, params='0.25,0.25,0.25,0.25'):
+def get_codebleu(pre_references, hypothesis, lang, params="0.25,0.25,0.25,0.25"):
     if not isinstance(pre_references, list):
         pre_references = [pre_references]
-    alpha, beta, gamma, theta = [float(x) for x in params.split(',')]
+    alpha, beta, gamma, theta = [float(x) for x in params.split(",")]
 
     # # preprocess inputs
     # pre_references = [[x.strip() for x in open(file, 'r', encoding='utf-8').readlines()] for file in refs]
@@ -38,32 +39,54 @@ def get_codebleu(pre_references, hypothesis, lang, params='0.25,0.25,0.25,0.25')
     # calculate weighted ngram match
     root_dir = os.path.dirname(__file__)
     # keywords = [x.strip() for x in open(root_dir + '/keywords/' + lang + '.txt', 'r', encoding='utf-8').readlines()]
-    keywords = [x.strip() for x in open(root_dir + '/keywords/' + lang + '.txt', 'r', encoding='utf-8').readlines()]
-
+    keywords = [
+        x.strip()
+        for x in open(
+            root_dir + "/keywords/" + lang + ".txt", "r", encoding="utf-8"
+        ).readlines()
+    ]
 
     def make_weights(reference_tokens, key_word_list):
-        return {token: 1 if token in key_word_list else 0.2 for token in reference_tokens}
+        return {
+            token: 1 if token in key_word_list else 0.2 for token in reference_tokens
+        }
 
-    tokenized_refs_with_weights = [[[reference_tokens, make_weights(reference_tokens, keywords)] \
-                                    for reference_tokens in reference] for reference in tokenized_refs]
+    tokenized_refs_with_weights = [
+        [
+            [reference_tokens, make_weights(reference_tokens, keywords)]
+            for reference_tokens in reference
+        ]
+        for reference in tokenized_refs
+    ]
 
-    weighted_ngram_match_score = weighted_ngram_match.corpus_bleu(tokenized_refs_with_weights, tokenized_hyps)
+    weighted_ngram_match_score = weighted_ngram_match.corpus_bleu(
+        tokenized_refs_with_weights, tokenized_hyps
+    )
 
     # calculate syntax match
     syntax_match_score = syntax_match.corpus_syntax_match(references, hypothesis, lang)
 
     # calculate dataflow match
-    dataflow_match_score = dataflow_match.corpus_dataflow_match(references, hypothesis, lang)
+    dataflow_match_score = dataflow_match.corpus_dataflow_match(
+        references, hypothesis, lang
+    )
 
     # print('ngram match: {0}, weighted ngram match: {1}, syntax_match: {2}, dataflow_match: {3}'. \
     #       format(ngram_match_score, weighted_ngram_match_score, syntax_match_score, dataflow_match_score))
 
-    code_bleu_score = alpha * ngram_match_score \
-                      + beta * weighted_ngram_match_score \
-                      + gamma * syntax_match_score \
-                      + theta * dataflow_match_score
+    code_bleu_score = (
+        alpha * ngram_match_score
+        + beta * weighted_ngram_match_score
+        + gamma * syntax_match_score
+        + theta * dataflow_match_score
+    )
 
-    return code_bleu_score, (ngram_match_score, weighted_ngram_match_score, syntax_match_score, dataflow_match_score)
+    return code_bleu_score, (
+        ngram_match_score,
+        weighted_ngram_match_score,
+        syntax_match_score,
+        dataflow_match_score,
+    )
 
 
 # if __name__ == '__main__':
@@ -81,4 +104,3 @@ def get_codebleu(pre_references, hypothesis, lang, params='0.25,0.25,0.25,0.25')
 #     args = parser.parse_args()
 #     code_bleu_score = get_codebleu(args.refs, args.hyp, args.lang, args.params)
 #     print('CodeBLEU score: ', code_bleu_score)
-

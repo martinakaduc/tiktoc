@@ -1,29 +1,39 @@
-# Copyright (c) Microsoft Corporation. 
+# Copyright (c) Microsoft Corporation.
 # Licensed under the MIT license.
 
 # from evaluator.CodeBLEU.parser import DFG_python, DFG_java, DFG_ruby, DFG_go, DFG_php, DFG_javascript, DFG_csharp
-from .parser import DFG_python, DFG_java, DFG_ruby, DFG_go, DFG_php, DFG_javascript, DFG_csharp
+from .parser import (
+    DFG_python,
+    DFG_java,
+    DFG_ruby,
+    DFG_go,
+    DFG_php,
+    DFG_javascript,
+    DFG_csharp,
+)
 
 # from evaluator.CodeBLEU.parser import (remove_comments_and_docstrings,
 #                                        tree_to_token_index,
 #                                        index_to_code_token,
 #                                        tree_to_variable_index)
-from .parser import (remove_comments_and_docstrings,
-                                       tree_to_token_index,
-                                       index_to_code_token,
-                                       tree_to_variable_index)
+from .parser import (
+    remove_comments_and_docstrings,
+    tree_to_token_index,
+    index_to_code_token,
+    tree_to_variable_index,
+)
 from tree_sitter import Language, Parser
 import os
 
 root_dir = os.path.dirname(__file__)
 dfg_function = {
-    'python': DFG_python,
-    'java': DFG_java,
-    'ruby': DFG_ruby,
-    'go': DFG_go,
-    'php': DFG_php,
-    'javascript': DFG_javascript,
-    'c_sharp': DFG_csharp,
+    "python": DFG_python,
+    "java": DFG_java,
+    "ruby": DFG_ruby,
+    "go": DFG_go,
+    "php": DFG_php,
+    "javascript": DFG_javascript,
+    "c_sharp": DFG_csharp,
 }
 
 
@@ -32,7 +42,7 @@ def calc_syntax_match(references, candidate, lang):
 
 
 def corpus_syntax_match(references, candidates, lang):
-    JAVA_LANGUAGE = Language(root_dir + '/parser/my-languages.so', lang)
+    JAVA_LANGUAGE = Language(root_dir + "/parser/my-languages.so", lang)
     parser = Parser()
     parser.set_language(JAVA_LANGUAGE)
     match_count = 0
@@ -43,17 +53,17 @@ def corpus_syntax_match(references, candidates, lang):
         candidate = candidates[i]
         for reference in references_sample:
             try:
-                candidate = remove_comments_and_docstrings(candidate, 'java')
+                candidate = remove_comments_and_docstrings(candidate, "java")
             except:
                 pass
             try:
-                reference = remove_comments_and_docstrings(reference, 'java')
+                reference = remove_comments_and_docstrings(reference, "java")
             except:
                 pass
 
-            candidate_tree = parser.parse(bytes(candidate, 'utf8')).root_node
+            candidate_tree = parser.parse(bytes(candidate, "utf8")).root_node
 
-            reference_tree = parser.parse(bytes(reference, 'utf8')).root_node
+            reference_tree = parser.parse(bytes(reference, "utf8")).root_node
 
             def get_all_sub_trees(root_node):
                 node_stack = []
