@@ -76,15 +76,15 @@ def main(configs):
         os.makedirs(os.path.join(configs.model_save_dir, now), exist_ok=True)
 
     # load model
-    # if configs.continue_training:
-    #     lstm, tokenizer, model, linear = load_okt_model(configs, device, now, True)
+    if configs.continue_training:
+        lstm, tokenizer, model, linear = load_okt_model(configs, device, now, True)
 
-    # else:
-    #     lstm, tokenizer, model, linear = create_okt_model(configs, device)
-    #     predictor = None
-    #     if configs.multitask:
-    #         if configs.multitask_label == "raw":
-    #             predictor = create_multitask_predictor(configs, device)
+    else:
+        lstm, tokenizer, model, linear = create_okt_model(configs, device)
+        predictor = None
+        if configs.multitask:
+            if configs.multitask_label == "raw":
+                predictor = create_multitask_predictor(configs, device)
 
     ## load the init dataset
     if configs.split_by == "submission":
