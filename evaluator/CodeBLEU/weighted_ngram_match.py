@@ -13,14 +13,14 @@
 """BLEU score implementation."""
 
 import math
+import pdb
 import sys
-from fractions import Fraction
 import warnings
 from collections import Counter
+from fractions import Fraction
 
 # from evaluator.CodeBLEU.utils import ngrams
 from .utils import ngrams
-import pdb
 
 
 def sentence_bleu(
@@ -266,7 +266,7 @@ def modified_recall(references, hypothesis, n):
         # # Usually this happens when the ngram order is > len(reference).
         # denominator += max(1, sum(counts.values()))
 
-    # return Fraction(numerator, denominator, _normalize=False)
+    # return Fraction(numerator, denominator)
     return numerator, denominator
 
 
