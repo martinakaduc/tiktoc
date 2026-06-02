@@ -286,11 +286,16 @@ def generator_student_step(
                 pooled_out = pooled_out / (ques_cnt + eps)
 
                 if configs.multitask_label == "raw":
+                    pooled_out = pooled_out.to(
+                        device=predictor.weight.device,
+                        dtype=predictor.weight.dtype,
+                    )
                     logits = predictor(pooled_out)
                 else:
                     ques_seq_sub = ques_seqs_groups[i].squeeze(-1)
                     pooled_out = pooled_out.unsqueeze(1)
-                    model_weight = predictor[ques_seq_sub]
+                    model_weight = predictor[ques_seq_sub].to(device=pooled_out.device)
+                    pooled_out = pooled_out.to(dtype=model_weight.dtype)
                     logits = torch.matmul(pooled_out, model_weight)
                     logits = logits.squeeze(1)
 
@@ -314,11 +319,18 @@ def generator_student_step(
                     pooled_out = pooled_out / (ques_cnt + eps)
 
                     if configs.multitask_label == "raw":
+                        pooled_out = pooled_out.to(
+                            device=predictor.weight.device,
+                            dtype=predictor.weight.dtype,
+                        )
                         logits = predictor(pooled_out)
                     else:
                         ques_seq_sub = ques_seqs_groups[i].squeeze(-1)
                         pooled_out = pooled_out.unsqueeze(1)
-                        model_weight = predictor[ques_seq_sub]
+                        model_weight = predictor[ques_seq_sub].to(
+                            device=pooled_out.device
+                        )
+                        pooled_out = pooled_out.to(dtype=model_weight.dtype)
                         logits = torch.matmul(pooled_out, model_weight)
                         logits = logits.squeeze(1)
 
@@ -542,7 +554,10 @@ def predict_granular_step(
     batch_combined_ks = torch.unsqueeze(batch_combined_ks, 2)
 
     batch_question_seqs = torch.transpose(padded_question_seqs, 0, 1)
-    model_weight = granular_model[batch_question_seqs]
+    model_weight = granular_model[batch_question_seqs].to(
+        device=batch_combined_ks.device
+    )
+    batch_combined_ks = batch_combined_ks.to(dtype=model_weight.dtype)
 
     if train:
         logits = torch.matmul(batch_combined_ks, model_weight)
