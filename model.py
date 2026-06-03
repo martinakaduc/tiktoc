@@ -14,7 +14,7 @@ from peft import (
 
 
 def create_lstm_model(configs, device):
-    if (
+    if not getattr(configs, "respect_lstm_inp_dim", False) and (
         configs.okt_model == "codellama/CodeLlama-7b-Instruct-hf"
         or configs.okt_model == "meta-llama/Meta-Llama-3-8B-Instruct"
         or configs.okt_model == "Qwen/Qwen1.5-7B"
