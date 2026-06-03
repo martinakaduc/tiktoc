@@ -1,0 +1,75 @@
+##################################################
+# exp_opts
+##################################################
+seed: 0
+exp_name: 'okt'
+save_model: false
+testing: false
+log_train_every_itr: 100
+model_save_dir: 'checkpoints_foundationalassist'
+use_cuda: false
+log_wandb: false
+continue_training: false
+start_epoch: 0
+wandb_project: 'okt-foundationalassist'
+wandb_key: ''
+##################################################
+# data_opts
+##################################################
+data_path: 'data/FoundationalASSIST'
+dataset_file: 'dataset_granular_all.pkl'
+test_size: 0.2
+max_len: 200
+label_type: 'raw'
+first_ast_convertible: false
+split_by: 'student'
+use_template: false
+##################################################
+# model_lstm_opts
+##################################################
+use_lstm: true
+lstm_inp_dim: 64
+lstm_hid_dim: 64
+train_lstm: true
+num_layers: 1
+lstm_lr: 0.00005
+##################################################
+# model_gpt_opts
+##################################################
+okt_model: 'gpt-2'
+train_okt: true
+##################################################
+# train_generator_opts
+##################################################
+epochs: 10
+batch_size: 4
+accum_iter: 1
+lr: 0.00001
+lr_linear: 0.005
+use_scheduler: true
+warmup_ratio: 0.1
+multitask: false
+multitask_pred_linear: 0.0001
+loss_fn: 'BCE'
+multitask_label: ''
+multitask_inp: 'hid'
+multitask_init: 'emb'
+multitask_init_combine: false
+use_transition_model: false
+alpha: ''
+valid_question_no: 0
+T_max: 1
+##################################################
+# LoRA configs
+##################################################
+lora_alpha: 256
+lora_dropout: 0.05
+lora_r: 128
+##################################################
+# evaluation configs
+##################################################
+nsamples: 1
+k: 1
+p: 0
+max_new_tokens: 80
+change_generation_length: false

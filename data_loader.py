@@ -1,3 +1,5 @@
+import os
+
 import pandas as pd
 from tqdm import tqdm
 import torch
@@ -11,6 +13,20 @@ from pdb import set_trace
 
 def nested_dict():
     return defaultdict(list)
+
+
+def _read_configured_dataset(configs, default_filename):
+    dataset_file = getattr(configs, "dataset_file", None) or getattr(
+        configs, "granular_dataset_file", None
+    )
+    if not dataset_file:
+        dataset_file = default_filename
+
+    if os.path.isabs(dataset_file):
+        dataset_path = dataset_file
+    else:
+        dataset_path = os.path.join(configs.data_path, dataset_file)
+    return pd.read_pickle(dataset_path)
 
 
 def preprocess_valid_testcase_data(configs, pickle_file):
@@ -179,7 +195,12 @@ def read_data(configs, tokenizer, model, device):
 # read_granular_data split the dataset contains granular correctness for each submission based on student, which
 # follows the standard way to split the dataset
 def read_granular_data(configs):
-    if configs.first_ast_convertible:
+    configured_dataset = getattr(configs, "dataset_file", None) or getattr(
+        configs, "granular_dataset_file", None
+    )
+    if configured_dataset:
+        dataset = _read_configured_dataset(configs, "dataset_granular_all.pkl")
+    elif configs.first_ast_convertible:
         if (
             configs.okt_model == "codellama/CodeLlama-7b-Instruct-hf"
             or configs.okt_model == "meta-llama/Meta-Llama-3-8B-Instruct"
@@ -191,7 +212,7 @@ def read_granular_data(configs):
                 configs.data_path + "/dataset_testcase_1st_gpt2.pkl"
             )
     else:
-        dataset = pd.read_pickle(configs.data_path + "/dataset_granular_all.pkl")
+        dataset = _read_configured_dataset(configs, "dataset_granular_all.pkl")
 
     students = dataset["SubjectID"].unique()
     trainset, testset = train_test_split(
@@ -345,7 +366,12 @@ def get_lstm_inputs(configs, train_set, dataset, collate_fn):
 
 
 def construct_okt_dataset_from_granular(configs):
-    if configs.first_ast_convertible:
+    configured_dataset = getattr(configs, "dataset_file", None) or getattr(
+        configs, "granular_dataset_file", None
+    )
+    if configured_dataset:
+        dataset = _read_configured_dataset(configs, "dataset_granular_1st.pkl")
+    elif configs.first_ast_convertible:
         if (
             configs.okt_model == "codellama/CodeLlama-7b-Instruct-hf"
             or configs.okt_model == "meta-llama/Meta-Llama-3-8B-Instruct"
@@ -357,7 +383,7 @@ def construct_okt_dataset_from_granular(configs):
                 configs.data_path + "/dataset_testcase_1st_gpt2.pkl"
             )
     else:
-        dataset = []
+        dataset = _read_configured_dataset(configs, "dataset_granular_1st.pkl")
 
     students = dataset["SubjectID"].unique()
     train_student_set, test_student_set = train_test_split(
@@ -753,10 +779,10 @@ class CollateForOKTstudent(object):
         self.device = device
         self.delimiter_token_id = tokenizer.convert_tokens_to_ids(":")
         self.eval = eval
+        self.test_case_dict = question_test_dict
+        self.question_no_map = question_no_map
 
         if configs.multitask_label == "granular":
-            self.test_case_dict = question_test_dict
-            self.question_no_map = question_no_map
             self.T_max = max([len(i) for i in self.test_case_dict.values()])
 
     def __call__(self, batch):
@@ -790,9 +816,12 @@ class CollateForOKTstudent(object):
             )  # transposed padded_granular_cor shape: (T, B, T_max)
 
         question_seqs = [b["ProblemID_seq"] for b in batch]
-        question_seqs = [
-            [self.question_no_map[i] for i in seqs] for seqs in question_seqs
-        ]
+        if self.question_no_map is None:
+            question_seqs = [[0 for _ in seqs] for seqs in question_seqs]
+        else:
+            question_seqs = [
+                [self.question_no_map[i] for i in seqs] for seqs in question_seqs
+            ]
         padded_question_seqs = [i + [0] * (max_len - len(i)) for i in question_seqs]
         padded_question_seqs = torch.tensor(padded_question_seqs).t()  # shape: (T, B)
 
