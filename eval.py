@@ -775,11 +775,16 @@ def predict_score_question_only(
 
         if granular:
             pooled_out = pooled_out.unsqueeze(1)
-            model_weight = predict_linear[problem_seqs]
+            model_weight = predict_linear[problem_seqs].to(device=pooled_out.device)
+            pooled_out = pooled_out.to(dtype=model_weight.dtype)
             logits = torch.matmul(pooled_out, model_weight)
             logits = logits.squeeze(1)
 
         else:
+            pooled_out = pooled_out.to(
+                device=predict_linear.weight.device,
+                dtype=predict_linear.weight.dtype,
+            )
             logits = predict_linear(pooled_out)
 
         score = torch.sigmoid(logits)
@@ -793,6 +798,9 @@ def predict_score_question_only(
 
 def predict_score_concat(pred_inp, predictor):
     with torch.no_grad():
+        first_param = next(predictor.parameters(), None)
+        if first_param is not None:
+            pred_inp = pred_inp.to(device=first_param.device, dtype=first_param.dtype)
         logits = predictor(pred_inp)
         score = torch.sigmoid(logits)
 
