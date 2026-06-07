@@ -15,6 +15,43 @@ def nested_dict():
     return defaultdict(list)
 
 
+STRING_DATASET_COLUMNS = (
+    "SubjectID",
+    "CodeStateID",
+    "Code",
+    "prompt",
+    "ServerTimestamp",
+)
+
+
+def _normalize_string_column(value):
+    if value is None or value is pd.NA:
+        return ""
+    try:
+        if bool(pd.isna(value)):
+            return ""
+    except (TypeError, ValueError):
+        pass
+    return str(value)
+
+
+def _normalize_loaded_dataset(dataset):
+    dataset = dataset.copy()
+    for column in STRING_DATASET_COLUMNS:
+        if column in dataset.columns:
+            dataset[column] = (
+                dataset[column]
+                .astype(object)
+                .map(_normalize_string_column)
+                .astype(object)
+            )
+    return dataset
+
+
+def _subject_ids(dataset):
+    return dataset["SubjectID"].drop_duplicates().to_numpy(dtype=object)
+
+
 def _read_configured_dataset(configs, default_filename):
     dataset_file = getattr(configs, "dataset_file", None) or getattr(
         configs, "granular_dataset_file", None
@@ -26,7 +63,7 @@ def _read_configured_dataset(configs, default_filename):
         dataset_path = dataset_file
     else:
         dataset_path = os.path.join(configs.data_path, dataset_file)
-    return pd.read_pickle(dataset_path)
+    return _normalize_loaded_dataset(pd.read_pickle(dataset_path))
 
 
 def preprocess_valid_testcase_data(configs, pickle_file):
@@ -83,9 +120,12 @@ def read_data(configs, tokenizer, model, device):
         or configs.okt_model == "funcom"
         or configs.okt_model == "gpt-2"
     ):
-        dataset = pd.read_pickle(configs.data_path + "/dataset_time.pkl")
+        dataset = _normalize_loaded_dataset(
+            pd.read_pickle(configs.data_path + "/dataset_time.pkl")
+        )
     else:
         dataset, sat_questions = construct_dataset(configs, tokenizer, model, device)
+        dataset = _normalize_loaded_dataset(dataset)
     print("Dataset constructed")
 
     ## if only testing, subsample part of dataset
@@ -155,7 +195,7 @@ def read_data(configs, tokenizer, model, device):
     # preprocess_all_submission(configs, dataset)
 
     ## Each subject ID implies a student
-    students = dataset["SubjectID"].unique()
+    students = _subject_ids(dataset)
 
     # Train, val, test split
     if configs.split_by == "student":
@@ -206,15 +246,17 @@ def read_granular_data(configs):
             or configs.okt_model == "meta-llama/Meta-Llama-3-8B-Instruct"
             or configs.okt_model == "Qwen/Qwen1.5-7B"
         ):
-            dataset = pd.read_pickle(configs.data_path + "/dataset_granular_1st.pkl")
+            dataset = _normalize_loaded_dataset(
+                pd.read_pickle(configs.data_path + "/dataset_granular_1st.pkl")
+            )
         else:
-            dataset = pd.read_pickle(
-                configs.data_path + "/dataset_testcase_1st_gpt2.pkl"
+            dataset = _normalize_loaded_dataset(
+                pd.read_pickle(configs.data_path + "/dataset_testcase_1st_gpt2.pkl")
             )
     else:
         dataset = _read_configured_dataset(configs, "dataset_granular_all.pkl")
 
-    students = dataset["SubjectID"].unique()
+    students = _subject_ids(dataset)
     trainset, testset = train_test_split(
         students, test_size=configs.test_size, random_state=configs.seed
     )
@@ -265,7 +307,7 @@ def make_pytorch_dataset(
             return lstm_student
 
         else:
-            students = dataset_full["SubjectID"].unique()
+            students = _subject_ids(dataset_full)
             lstm_dataset = {}
             for student in students:
                 lstm_dataset[student] = dataset_full[
@@ -274,7 +316,7 @@ def make_pytorch_dataset(
             del dataset_full
 
     okt_dataset = []
-    students = dataset_split["SubjectID"].unique()
+    students = _subject_ids(dataset_split)
 
     for student in students:
         subset = dataset_split[dataset_split.SubjectID == student]
@@ -377,15 +419,17 @@ def construct_okt_dataset_from_granular(configs):
             or configs.okt_model == "meta-llama/Meta-Llama-3-8B-Instruct"
             or configs.okt_model == "Qwen/Qwen1.5-7B"
         ):
-            dataset = pd.read_pickle(configs.data_path + "/dataset_granular_1st.pkl")
+            dataset = _normalize_loaded_dataset(
+                pd.read_pickle(configs.data_path + "/dataset_granular_1st.pkl")
+            )
         else:
-            dataset = pd.read_pickle(
-                configs.data_path + "/dataset_testcase_1st_gpt2.pkl"
+            dataset = _normalize_loaded_dataset(
+                pd.read_pickle(configs.data_path + "/dataset_testcase_1st_gpt2.pkl")
             )
     else:
         dataset = _read_configured_dataset(configs, "dataset_granular_1st.pkl")
 
-    students = dataset["SubjectID"].unique()
+    students = _subject_ids(dataset)
     train_student_set, test_student_set = train_test_split(
         students, test_size=configs.test_size, random_state=configs.seed
     )
@@ -496,15 +540,17 @@ def map_test_case_to_dataset(solution_dict, question_input_dict, configs):
             or configs.okt_model == "meta-llama/Meta-Llama-3-8B-Instruct"
             or configs.okt_model == "Qwen/Qwen1.5-7B"
         ):
-            dataset = pd.read_pickle(configs.data_path + "/dataset_granular_1st.pkl")
+            dataset = _normalize_loaded_dataset(
+                pd.read_pickle(configs.data_path + "/dataset_granular_1st.pkl")
+            )
         else:
-            dataset = pd.read_pickle(
-                configs.data_path + "/dataset_testcase_1st_gpt2.pkl"
+            dataset = _normalize_loaded_dataset(
+                pd.read_pickle(configs.data_path + "/dataset_testcase_1st_gpt2.pkl")
             )
     else:
         dataset = []
 
-    students = dataset["SubjectID"].unique()
+    students = _subject_ids(dataset)
     lstm_dataset = {}
     for student in students:
         lstm_dataset[student] = dataset[dataset.SubjectID == student].input.tolist()
